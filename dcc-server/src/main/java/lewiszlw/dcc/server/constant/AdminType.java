@@ -10,15 +10,13 @@ import lombok.Getter;
  */
 @Getter
 public enum AdminType {
-    UNKNOWN(0, "未知"),
-    SUPER(1, "超级管理员"),
-    GENERAL(2, "普通管理员");
+    UNKNOWN("未知"),
+    SUPER("超级管理员"),
+    GENERAL("普通管理员");
 
-    private int type;
     private String desc;
 
-    AdminType(int type, String desc) {
-        this.type = type;
+    AdminType(String desc) {
         this.desc = desc;
     }
 }

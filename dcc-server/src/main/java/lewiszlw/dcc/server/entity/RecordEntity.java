@@ -4,6 +4,8 @@ import lewiszlw.dcc.server.constant.RecordType;
 import lombok.Data;
 import lombok.experimental.Accessors;
 
+import java.util.Date;
+
 /**
  * Desc: 记录实体
  *
@@ -21,15 +23,22 @@ public class RecordEntity {
 
     /**
      * 记录类型
-     * @see RecordType
      */
-    private int recordType;
+    private RecordType recordType;
 
     /**
-     * 应用配置空间
+     * 操作人
      */
-    private String namespace;
+    private String operator;
 
+    /**
+     * 应用
+     */
+    private String application;
 
+    /**
+     * 创建时间
+     */
+    private Date createdTime;
 
 }

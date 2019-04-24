@@ -22,15 +22,14 @@ public class AdminEntity {
     private int id;
 
     /**
-     * 应用配置空间
+     * 应用标识
      */
-    private String namespace;
+    private String application;
 
     /**
      * 管理员类型
-     * @see AdminType
      */
-    private Integer adminType;
+    private AdminType adminType;
 
     /**
      * 管理员标识

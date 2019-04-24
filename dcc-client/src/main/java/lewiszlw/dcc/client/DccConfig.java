@@ -15,12 +15,17 @@ import java.lang.annotation.Target;
 @Target(ElementType.FIELD)
 public @interface DccConfig {
     /**
-     * 应用配置空间
+     * 应用
      */
-    String namespace();
+    String application() default "";
+
+    /**
+     * 分组
+     */
+    String group() default "";
 
     /**
      * 配置项key
      */
-    String key();
+    String key() default "";
 }
