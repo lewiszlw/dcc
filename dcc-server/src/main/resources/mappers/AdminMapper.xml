@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+
+<mapper namespace="lewiszlw.dcc.server.mapper.AdminMapper" >
+
+    <resultMap id="BaseResultMap" type="lewiszlw.dcc.server.entity.AdminEntity">
+        <id column="id" property="id" />
+        <result column="application" property="application" />
+        <result column="admin_type" property="adminType" typeHandler="org.apache.ibatis.type.EnumTypeHandler"/>
+        <result column="admin_id" property="adminId" />
+        <result column="created_time" property="createdTime" />
+        <result column="updated_time" property="updatedTime" />
+    </resultMap>
+
+    <select id="selectAll" resultMap="BaseResultMap">
+        select * from dcc_admin
+    </select>
+
+</mapper>

@@ -1,4 +1,4 @@
-package lewiszlw.dcc.client;
+package lewiszlw.dcc.client.annotation;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
