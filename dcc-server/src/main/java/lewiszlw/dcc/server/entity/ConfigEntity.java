@@ -1,6 +1,6 @@
 package lewiszlw.dcc.server.entity;
 
-import lewiszlw.dcc.server.constant.Env;
+import lewiszlw.dcc.iface.constant.Env;
 import lombok.Data;
 import lombok.experimental.Accessors;
 

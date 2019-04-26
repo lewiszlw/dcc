@@ -9,25 +9,15 @@
         <relativePath>../pom.xml</relativePath>
     </parent>
     <groupId>lewiszlw</groupId>
-    <artifactId>dcc-client</artifactId>
-    <name>dcc-client</name>
-    <description>Distributed Config Center</description>
+    <artifactId>dcc-demo</artifactId>
+    <name>dcc-demo</name>
+    <description>Demo project for Spring Boot</description>
 
     <properties>
         <java.version>1.8</java.version>
     </properties>
 
     <dependencies>
-        <dependency>
-            <groupId>lewiszlw</groupId>
-            <artifactId>dcc-interface</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>com.google.guava</groupId>
-            <artifactId>guava</artifactId>
-        </dependency>
-
         <!--spring boot-->
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -35,21 +25,20 @@
         </dependency>
 
         <dependency>
-            <groupId>org.apache.dubbo</groupId>
-            <artifactId>dubbo-spring-boot-starter</artifactId>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
         </dependency>
 
-        <!--dubbo-->
         <dependency>
-            <groupId>org.apache.dubbo</groupId>
-            <artifactId>dubbo</artifactId>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
 
-        <!-- Zookeeper dependencies -->
+        <!--dcc client-->
         <dependency>
-            <groupId>org.apache.dubbo</groupId>
-            <artifactId>dubbo-dependencies-zookeeper</artifactId>
-            <type>pom</type>
+            <groupId>lewiszlw</groupId>
+            <artifactId>dcc-client</artifactId>
         </dependency>
 
     </dependencies>
@@ -65,10 +54,6 @@
                     <target>1.8</target>
                 </configuration>
             </plugin>
-            <!--<plugin>-->
-                <!--<groupId>org.springframework.boot</groupId>-->
-                <!--<artifactId>spring-boot-maven-plugin</artifactId>-->
-            <!--</plugin>-->
         </plugins>
     </build>
 

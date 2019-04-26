@@ -1,6 +1,6 @@
 package lewiszlw.dcc.server.service;
 
-import lewiszlw.dcc.server.service.zookeeper.ZooKeeperService;
+import lewiszlw.dcc.server.zookeeper.ZooKeeperService;
 import org.apache.zookeeper.ZooKeeper;
 import org.junit.Assert;
 import org.junit.Test;

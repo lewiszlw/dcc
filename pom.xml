@@ -11,8 +11,9 @@
 
     <modules>
         <module>dcc-client</module>
+        <module>dcc-interface</module>
         <module>dcc-server</module>
-        <module>dcc-web</module>
+        <module>dcc-demo</module>
     </modules>
 
     <properties>
@@ -36,21 +37,14 @@
 
             <dependency>
                 <groupId>lewiszlw</groupId>
-                <artifactId>dcc-client</artifactId>
+                <artifactId>dcc-interface</artifactId>
                 <version>${project.version}</version>
             </dependency>
 
             <dependency>
                 <groupId>lewiszlw</groupId>
-                <artifactId>dcc-web</artifactId>
+                <artifactId>dcc-client</artifactId>
                 <version>${project.version}</version>
-            </dependency>
-
-            <!--zookeeper-->
-            <dependency>
-                <groupId>org.apache.zookeeper</groupId>
-                <artifactId>zookeeper</artifactId>
-                <version>${zookeeper.version}</version>
             </dependency>
 
             <!--<dependency>-->
@@ -59,6 +53,12 @@
             <!--</dependency>-->
 
             <!--spring boot-->
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-starter</artifactId>
+                <version>${spring-boot.version}</version>
+            </dependency>
+
             <dependency>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-starter-web</artifactId>
@@ -70,6 +70,45 @@
                 <artifactId>spring-boot-starter-test</artifactId>
                 <version>${spring-boot.version}</version>
                 <scope>test</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.dubbo</groupId>
+                <artifactId>dubbo-spring-boot-starter</artifactId>
+                <version>2.7.1</version>
+            </dependency>
+
+            <!-- Dubbo -->
+            <dependency>
+                <groupId>org.apache.dubbo</groupId>
+                <artifactId>dubbo</artifactId>
+                <version>2.7.1</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>org.springframework</groupId>
+                        <artifactId>spring</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>javax.servlet</groupId>
+                        <artifactId>servlet-api</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>log4j</groupId>
+                        <artifactId>log4j</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>org.springframework</groupId>
+                        <artifactId>spring-context</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+
+            <!-- Zookeeper dependencies -->
+            <dependency>
+                <groupId>org.apache.dubbo</groupId>
+                <artifactId>dubbo-dependencies-zookeeper</artifactId>
+                <version>2.7.1</version>
+                <type>pom</type>
             </dependency>
 
             <!--lombok-->
@@ -106,10 +145,19 @@
         <pluginManagement>
             <plugins>
                 <plugin>
-                    <groupId>org.springframework.boot</groupId>
-                    <artifactId>spring-boot-maven-plugin</artifactId>
-                    <version>1.3.5.RELEASE</version>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <version>3.8.0</version>
+                    <configuration>
+                        <source>1.8</source>
+                        <target>1.8</target>
+                    </configuration>
                 </plugin>
+                <!--<plugin>-->
+                    <!--<groupId>org.springframework.boot</groupId>-->
+                    <!--<artifactId>spring-boot-maven-plugin</artifactId>-->
+                    <!--<version>1.5.4.RELEASE</version>-->
+                <!--</plugin>-->
             </plugins>
         </pluginManagement>
     </build>
