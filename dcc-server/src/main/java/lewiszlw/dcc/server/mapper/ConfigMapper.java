@@ -1,7 +1,9 @@
 package lewiszlw.dcc.server.mapper;
 
+import lewiszlw.dcc.iface.constant.Env;
 import lewiszlw.dcc.server.entity.ConfigEntity;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -17,4 +19,19 @@ import java.util.List;
 public interface ConfigMapper {
 
     List<ConfigEntity> selectAll();
+
+    /**
+     * 查询应用所有配置的所有版本
+     */
+    List<ConfigEntity> batchSelectAllVersions(@Param("application") String application,
+                                               @Param("env") Env env,
+                                               @Param("group") String group);
+
+    /**
+     * 查询一个配置所有版本
+     */
+    List<ConfigEntity> selectOneAllVersions(@Param("application") String application,
+                                    @Param("env") Env env,
+                                    @Param("group") String group,
+                                    @Param("key") String key);
 }

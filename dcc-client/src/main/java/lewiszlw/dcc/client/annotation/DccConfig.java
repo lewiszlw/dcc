@@ -17,12 +17,12 @@ public @interface DccConfig {
     /**
      * 应用
      */
-    String application() default "";
+//    String application() default "";
 
     /**
      * 分组
      */
-    String group() default "";
+//    String group() default "";
 
     /**
      * 配置项key

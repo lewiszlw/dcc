@@ -14,11 +14,13 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class DccClientConfig {
 
-    @Bean
+    @Bean(initMethod = "init", destroyMethod = "destroy")
     public DccClient dccConfigClient() {
         DccClient dccClient = new DccClient();
         dccClient.setApplication("dcc-demo");
         dccClient.setEnv(Env.TEST);
+        // 可不配，默认取default分组配置
+        dccClient.setGroup("default");
         return dccClient;
     }
 }

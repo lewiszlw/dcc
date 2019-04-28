@@ -51,7 +51,18 @@ public class DccDemoApplication {
 ```
 4.使用DccClient动态配置
 ```java
-// TODO
+// 1.使用client
+@Autowired
+private DccClient dccClient;
+
+dccClient.get("configKey");
+
+// 2.使用注解
+@DccConfig
+private static String configKey1; // key为变量名
+
+@DccConfig(key = "configKey2")
+private static String config;
 ```
 
 # 功能
