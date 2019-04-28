@@ -15,5 +15,5 @@ import org.springframework.context.annotation.PropertySource;
 @EnableDubbo(scanBasePackages = "lewiszlw.dcc.client")
 @PropertySource("classpath:/spring/dubbo-consumer.properties")
 @ComponentScan(value = {"lewiszlw.dcc.client"})
-public class DubboConsumerConfig {
+public class DccDubboConsumerConfig {
 }
