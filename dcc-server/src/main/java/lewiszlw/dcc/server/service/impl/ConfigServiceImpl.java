@@ -4,11 +4,18 @@ import lewiszlw.dcc.iface.constant.Env;
 import lewiszlw.dcc.server.entity.ConfigEntity;
 import lewiszlw.dcc.server.mapper.ConfigMapper;
 import lewiszlw.dcc.server.service.ConfigService;
+import lewiszlw.dcc.server.util.JsonUtil;
+import lewiszlw.dcc.server.util.ZooKeeperUtil;
+import lewiszlw.dcc.server.vo.AddConfigRequest;
+import lewiszlw.dcc.server.zookeeper.ZooKeeperService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -22,6 +29,9 @@ public class ConfigServiceImpl implements ConfigService {
 
     @Autowired
     private ConfigMapper configMapper;
+
+    @Autowired
+    private ZooKeeperService zooKeeperService;
 
     @Override
     public List<ConfigEntity> allConfigs() {
@@ -48,12 +58,24 @@ public class ConfigServiceImpl implements ConfigService {
 
     @Override
     public ConfigEntity queryConfigLatest(String application, Env env, String group, String key) {
-        List<ConfigEntity> configEntities = configMapper.selectOneAllVersions(application, env, group, key);
-        return configEntities.stream().sorted(new Comparator<ConfigEntity>() {
-            @Override
-            public int compare(ConfigEntity o1, ConfigEntity o2) {
-                return o2.getVersion() - o1.getVersion();
-            }
-        }).findFirst().orElse(null);
+//        List<ConfigEntity> configEntities = configMapper.selectOneAllVersions(application, env, group, key);
+//        return configEntities.stream().sorted((o1, o2) -> o2.getVersion() - o1.getVersion()).findFirst().orElse(null);
+        String data = zooKeeperService.get(ZooKeeperUtil.path(application, env, group, key));
+        return JsonUtil.fromJson(data, ConfigEntity.class);
+    }
+
+    @Override
+    public Integer addConfigs(AddConfigRequest addConfigRequest) {
+        return null;
+    }
+
+    @Override
+    public List<ConfigEntity> queryConfigsAllVersion(String application, Env env, String group) {
+        return null;
+    }
+
+    @Override
+    public List<ConfigEntity> queryConfigsAllVersion(String application, Env env) {
+        return null;
     }
 }
