@@ -29,7 +29,7 @@ public class ConfigDubboServiceImpl implements ConfigDubboService {
 
     @Override
     public List<ConfigDTO> queryAllConfigs(String application, Env env, String group) {
-        List<ConfigEntity> configEntities = configService.queryAllConfigs(application, env, group);
+        List<ConfigEntity> configEntities = configService.queryConfigsLatest(application, env, group);
         if (CollectionUtils.isEmpty(configEntities)) {
             return Collections.EMPTY_LIST;
         }

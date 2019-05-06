@@ -28,7 +28,7 @@ public class ConfigController {
 
     @RequestMapping("/all")
     public WebResponse all(@RequestParam String application, @RequestParam Env env, @RequestParam String group) {
-        return WebResponse.createSuccessWebResponse(configService.queryAllConfigs(application, env, group));
+        return WebResponse.createSuccessWebResponse(configService.queryConfigsLatest(application, env, group));
     }
 
     @RequestMapping("/latest")

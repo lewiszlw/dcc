@@ -2,6 +2,7 @@ package lewiszlw.dcc.server.converter;
 
 import lewiszlw.dcc.iface.response.ConfigDTO;
 import lewiszlw.dcc.server.entity.ConfigEntity;
+import lewiszlw.dcc.server.vo.ConfigVO;
 
 /**
  * Desc:
@@ -20,5 +21,15 @@ public class ConfigConverter {
                 .setVersion(configEntity.getVersion())
                 .setValue(configEntity.getValue())
                 .setComment(configEntity.getComment());
+    }
+
+    public static ConfigEntity configVOToConfigEntity(ConfigVO configVO) {
+        return new ConfigEntity()
+                .setApplication(configVO.getApplication())
+                .setEnv(configVO.getEnv())
+                .setGroup(configVO.getGroup())
+                .setKey(configVO.getKey())
+                .setValue(configVO.getValue())
+                .setComment(configVO.getComment());
     }
 }

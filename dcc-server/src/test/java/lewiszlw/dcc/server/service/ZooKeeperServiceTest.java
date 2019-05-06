@@ -9,6 +9,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
+import java.util.List;
+
 /**
  * Desc:
  *
@@ -80,5 +82,26 @@ public class ZooKeeperServiceTest {
         Assert.assertTrue(zooKeeperService.state() == ZooKeeper.States.CONNECTED);
         zooKeeperService.release();
         Assert.assertTrue(zooKeeperService.state() == ZooKeeper.States.CLOSED);
+    }
+
+    @Test
+    public void testGetChildren() {
+        if (!zooKeeperService.exists("/test-config")) {
+            zooKeeperService.create("/test-config", "null");
+        }
+        if (!zooKeeperService.exists("/test-config/cfg1")) {
+            zooKeeperService.create("/test-config/cfg1", "null");
+        }
+        if (!zooKeeperService.exists("/test-config/cfg2")) {
+            zooKeeperService.create("/test-config/cfg2", "null");
+        }
+        List<String> children = zooKeeperService.getChildren("/test-config");
+        Assert.assertTrue(children.size() == 2);
+        Assert.assertTrue(children.contains("cfg1"));
+        Assert.assertTrue(children.contains("cfg2"));
+
+        zooKeeperService.delete("/test-config/cfg1");
+        zooKeeperService.delete("/test-config/cfg2");
+        zooKeeperService.delete("/test-config");
     }
 }

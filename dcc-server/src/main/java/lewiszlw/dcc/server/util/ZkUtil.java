@@ -8,7 +8,7 @@ import lewiszlw.dcc.iface.constant.Env;
  * @author zhanglinwei02
  * @date 2019-04-29
  */
-public class ZooKeeperUtil {
+public class ZkUtil {
 
     private static final String PATH_SEPARATOR = "/";
     private static final String PATH_ROOT = "/dcc";
@@ -22,4 +22,14 @@ public class ZooKeeperUtil {
                 .append(PATH_SEPARATOR).append(key);
         return path.toString();
     }
+
+    public static String path(String application, Env env, String group) {
+        StringBuilder path = new StringBuilder();
+        path.append(PATH_ROOT)
+                .append(PATH_SEPARATOR).append(application)
+                .append(PATH_SEPARATOR).append(env)
+                .append(PATH_SEPARATOR).append(group);
+        return path.toString();
+    }
+
 }

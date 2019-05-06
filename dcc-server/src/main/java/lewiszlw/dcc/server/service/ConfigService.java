@@ -20,10 +20,10 @@ public interface ConfigService {
     /**
      * 从ZK获取应用所有最新配置
      */
-    List<ConfigEntity> queryAllConfigs(String application, Env env, String group);
+    List<ConfigEntity> queryConfigsLatest(String application, Env env, String group);
 
     /**
-     * 从ZK获取应用某个配置
+     * 从ZK获取应用某个配置最新版
      */
     ConfigEntity queryConfigLatest(String application, Env env, String group, String key);
 
@@ -33,12 +33,8 @@ public interface ConfigService {
     Integer addConfigs(AddConfigRequest addConfigRequest);
 
     /**
-     * 从DB查询application，env，group下所有版本配置
+     * 从DB查询配置所有版本
      */
-    List<ConfigEntity> queryConfigsAllVersion(String application, Env env, String group);
+    List<ConfigEntity> queryConfigsAllVersion(String application, Env env, String group, String key);
 
-    /**
-     * 从DB查询application，env下所有版本配置
-     */
-    List<ConfigEntity> queryConfigsAllVersion(String application, Env env);
 }
