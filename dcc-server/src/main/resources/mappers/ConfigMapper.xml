@@ -15,6 +15,10 @@
         <result column="created_time" property="createdTime" />
     </resultMap>
 
+    <sql id="baseColumns" >
+        application, env, `group`, `key`, version, `value`, comment, created_time
+    </sql>
+
     <select id="selectAll" resultMap="BaseResultMap">
         select * from dcc_config
     </select>
@@ -34,4 +38,28 @@
         and `key` = #{key}
     </select>
 
+    <insert id="batchInsert" >
+        insert into dcc_config
+        (<include refid="baseColumns" />)
+        values
+        <foreach collection="list" item="configEntity" separator="," >
+            (
+            #{configEntity.application},
+            #{configEntity.env, typeHandler=EnumTypeHandler},
+            #{configEntity.group},
+            #{configEntity.key},
+            #{configEntity.version},
+            #{configEntity.comment},
+            now()
+            )
+        </foreach>
+    </insert>
+
+    <delete id="batchDelete" >
+        delete from dcc_config
+        where id in
+        <foreach collection="ids" item="id" open="(" close=")" separator="," >
+            #{id,jdbcType=INTEGER}
+        </foreach>
+    </delete>
 </mapper>

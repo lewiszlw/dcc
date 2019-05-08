@@ -34,4 +34,14 @@ public interface ConfigMapper {
                                     @Param("env") Env env,
                                     @Param("group") String group,
                                     @Param("key") String key);
+
+    /**
+     * 批量插入
+     */
+    Integer batchInsert(@Param("configEntities") List<ConfigEntity> configEntities);
+
+    /**
+     * 批量删除，仅用于测试
+     */
+    Integer batchDelete(@Param("ids") List<Integer> ids);
 }

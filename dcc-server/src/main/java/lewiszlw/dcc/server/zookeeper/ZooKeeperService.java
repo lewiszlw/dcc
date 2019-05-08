@@ -37,16 +37,14 @@ public class ZooKeeperService implements InitializingBean {
      * 初始化
      */
     private void init() throws IOException {
-        zookeeper = new ZooKeeper(zkURL, 5000, new Watcher() {
-            @Override
-            public void process(WatchedEvent event) {
-                if (event.getState() == Event.KeeperState.SyncConnected) {
-                    log.info("Zookeeper SyncConnected");
-                } else {
-                    log.error("Zookeeper is inactive");
-                }
-            }
-        });
+        // TODO 修复zk连接失败
+//        zookeeper = new ZooKeeper(zkURL, 5000, event -> {
+//            if (event.getState() == Watcher.Event.KeeperState.SyncConnected) {
+//                log.info("Zookeeper SyncConnected");
+//            } else {
+//                log.error("Zookeeper is inactive");
+//            }
+//        });
     }
 
     /**

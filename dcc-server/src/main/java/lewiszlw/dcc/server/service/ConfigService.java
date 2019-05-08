@@ -37,4 +37,8 @@ public interface ConfigService {
      */
     List<ConfigEntity> queryConfigsAllVersion(String application, Env env, String group, String key);
 
+    /**
+     * 从DB查询配置最新版本号
+     */
+    Integer queryConfigLatestVersion(String application, Env env, String group, String key);
 }

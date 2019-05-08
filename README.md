@@ -1,3 +1,4 @@
+![build-status](https://travis-ci.com/lewiszlw/dcc.svg?branch=master)
 # 项目简介
 DCC (Distributed Config Center)，一个轻量级的分布式配置中心。
 

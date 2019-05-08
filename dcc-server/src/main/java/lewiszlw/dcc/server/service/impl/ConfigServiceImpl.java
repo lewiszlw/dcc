@@ -1,7 +1,7 @@
 package lewiszlw.dcc.server.service.impl;
 
-import com.google.common.collect.Lists;
 import lewiszlw.dcc.iface.constant.Env;
+import lewiszlw.dcc.server.constant.Constants;
 import lewiszlw.dcc.server.converter.ConfigConverter;
 import lewiszlw.dcc.server.entity.ConfigEntity;
 import lewiszlw.dcc.server.mapper.ConfigMapper;
@@ -17,6 +17,7 @@ import org.springframework.util.CollectionUtils;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -87,7 +88,18 @@ public class ConfigServiceImpl implements ConfigService {
 
     private synchronized Integer writeDB(List<ConfigEntity> configEntities) {
         // TODO
-        return 0;
+        if (CollectionUtils.isEmpty(configEntities)) {
+            return 0;
+        }
+        // 版本号填充
+        configEntities.stream().forEach(configEntity -> {
+            Integer latestVersion = queryConfigLatestVersion(configEntity.getApplication(),
+                                                            configEntity.getEnv(),
+                                                            configEntity.getGroup(),
+                                                            configEntity.getKey());
+            configEntity.setVersion(latestVersion == null? Constants.INIT_VERSION : latestVersion + 1);
+        });
+        return configMapper.batchInsert(configEntities);
     }
 
 
@@ -96,4 +108,14 @@ public class ConfigServiceImpl implements ConfigService {
         return configMapper.selectOneAllVersions(application, env, group, key);
     }
 
+    @Override
+    public Integer queryConfigLatestVersion(String application, Env env, String group, String key) {
+        List<ConfigEntity> configEntities = configMapper.selectOneAllVersions(application, env, group, key);
+        if (CollectionUtils.isEmpty(configEntities)) {
+            return null;
+        }
+        List<ConfigEntity> entities = configEntities.stream()
+                .sorted(Comparator.comparingInt(ConfigEntity::getVersion)).collect(Collectors.toList());
+        return entities.get(entities.size() - 1).getVersion();
+    }
 }
