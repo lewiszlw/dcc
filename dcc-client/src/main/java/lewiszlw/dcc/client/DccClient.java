@@ -61,19 +61,11 @@ public class DccClient {
      */
     public String get(String key) {
         Preconditions.checkArgument(!StringUtils.isEmpty(key), "key is empty");
-        return get(application, group, key);
+        // 容灾：从本地缓存拿数据
+        return configCache.get(key);
     }
 
-    /**
-     * 获取其他应用的key
-     */
-    public String get(String application, String group, String key) {
-        Preconditions.checkArgument(!StringUtils.isEmpty(application), "application is empty");
-        Preconditions.checkArgument(!StringUtils.isEmpty(key), "key is empty");
-        ConfigDTO configDTO = configDubboService.queryConfig(application, env, group, key);
-        return Objects.isNull(configDTO)? null: configDTO.getValue();
-    }
-
+    // TODO 测试使用，后续删除
     public List<ConfigDTO> allConfigs() {
         return configDubboService.queryAllConfigs(application, env, group);
     }
