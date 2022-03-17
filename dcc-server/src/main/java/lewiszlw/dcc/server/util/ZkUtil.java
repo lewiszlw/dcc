@@ -10,10 +10,10 @@ import lewiszlw.dcc.iface.constant.Env;
  */
 public class ZkUtil {
 
-    private static final String PATH_SEPARATOR = "/";
-    private static final String PATH_ROOT = "/dcc";
+    public static final String PATH_SEPARATOR = "/";
+    public static final String PATH_ROOT = "/dcc";
 
-    public static String path(String application, Env env, String key) {
+    public static String configPath(String application, Env env, String key) {
         StringBuilder path = new StringBuilder();
         path.append(PATH_ROOT)
                 .append(PATH_SEPARATOR).append(application)

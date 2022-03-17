@@ -19,9 +19,9 @@ public class ZkUtilTest {
 
     @Test
     public void testPath() {
-        Assert.assertTrue(ZkUtil.path("test.app", Env.TEST, "config-test")
-                .equals("/dcc/test.app/TEST/default/config-test"));
+        Assert.assertTrue(ZkUtil.configPath("test.app", Env.TEST, "config-test")
+                .equals("/dcc/test.app/TEST/config-test"));
         Assert.assertTrue(ZkUtil.path("test.app", Env.TEST)
-                .equals("/dcc/test.app/TEST/default"));
+                .equals("/dcc/test.app/TEST"));
     }
 }

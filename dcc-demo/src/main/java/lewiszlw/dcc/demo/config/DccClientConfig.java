@@ -19,8 +19,6 @@ public class DccClientConfig {
         DccClient dccClient = new DccClient();
         dccClient.setApplication("dcc-demo");
         dccClient.setEnv(Env.TEST);
-        // 分组配置，默认取default
-        // dccClient.setGroup("default");
         // 扫描包路径，默认扫描全部
         // dccClient.setScanBasePackages(".");
         // 本地缓存持久化文件路径，默认为/opt/dcc/cache，需提前赋予读写权限

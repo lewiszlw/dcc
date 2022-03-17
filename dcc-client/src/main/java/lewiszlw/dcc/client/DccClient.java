@@ -9,6 +9,9 @@ import lewiszlw.dcc.client.util.FileUtil;
 import lewiszlw.dcc.iface.ConfigDubboService;
 import lewiszlw.dcc.iface.constant.Env;
 import lewiszlw.dcc.iface.response.ConfigDTO;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.dubbo.config.annotation.Reference;
 import org.reflections.Reflections;
@@ -36,12 +39,18 @@ import java.util.stream.Collectors;
  * @date 2019-04-26
  */
 @Slf4j
+@NoArgsConstructor
 public class DccClient {
 
+    @Getter @Setter
     private String application;
+    @Getter @Setter
     private Env env;
+    @Getter @Setter
     private String scanBasePackages = ".";
+    @Getter @Setter
     private String cacheFilePath = "/opt/dcc/cache";
+    @Getter @Setter
     private long period = 180;
 
     private Reflections reflections;
@@ -78,8 +87,10 @@ public class DccClient {
         initParamAndCheck();
         // 全量拉取配置到cache
         updateAndPersistCache(initLoadConfigs(), true);
-        // 扫描注解，给字段注入配置value并监听
+        // 扫描注解，给字段注入配置value
         scanAnnotation();
+        // TODO 通过在父节点添加watcher来监听所有配置变化
+
         // 启动定时任务
         startScheduledTask();
     }
@@ -127,7 +138,7 @@ public class DccClient {
     private List<ConfigDTO> pullFromServer() {
         try {
             List<ConfigDTO> configDTOS = configDubboService.queryConfigs(application, env);
-            log.debug("从server端全量拉取配置数据：{}", objectMapper.writeValueAsString(configDTOS));
+            log.info("从server端全量拉取配置数据：{}", objectMapper.writeValueAsString(configDTOS));
             if (CollectionUtils.isEmpty(configDTOS)) {
                 log.warn("DccClient全量拉取配置为空，请确认是否存在异常");
             }
@@ -177,12 +188,15 @@ public class DccClient {
      * 定时全量从server端拉取数据更新缓存
      */
     private void startScheduledTask() {
-        // TODO 测试先5s后执行 后续改为600秒
         scheduledExecutorService.scheduleAtFixedRate(() -> {
-            List<ConfigDTO> configDTOS = pullFromServer();
-            Map<String, String> configsFromServer = configDTOS.stream()
-                    .collect(Collectors.toMap(ConfigDTO::getKey, ConfigDTO::getValue));
-            updateAndPersistCache(configsFromServer, true);
+            try {
+                List<ConfigDTO> configDTOS = pullFromServer();
+                Map<String, String> configsFromServer = configDTOS.stream()
+                        .collect(Collectors.toMap(ConfigDTO::getKey, ConfigDTO::getValue));
+                updateAndPersistCache(configsFromServer, true);
+            } catch (Throwable th) {
+                log.error("定时全量从server端拉取数据更新缓存异常", th);
+            }
         }, 5, period, TimeUnit.SECONDS);
     }
 
@@ -223,48 +237,7 @@ public class DccClient {
      * spring bean destroy
      */
     public void destroy() {
+        // TODO
     }
 
-    /**
-     * ===================Getter & Setter=====================
-     */
-    public String getApplication() {
-        return application;
-    }
-
-    public void setApplication(String application) {
-        this.application = application;
-    }
-
-    public Env getEnv() {
-        return env;
-    }
-
-    public void setEnv(Env env) {
-        this.env = env;
-    }
-
-    public String getScanBasePackages() {
-        return scanBasePackages;
-    }
-
-    public void setScanBasePackages(String scanBasePackages) {
-        this.scanBasePackages = scanBasePackages;
-    }
-
-    public String getCacheFilePath() {
-        return cacheFilePath;
-    }
-
-    public void setCacheFilePath(String cacheFilePath) {
-        this.cacheFilePath = cacheFilePath;
-    }
-
-    public long getPeriod() {
-        return period;
-    }
-
-    public void setPeriod(long period) {
-        this.period = period;
-    }
 }

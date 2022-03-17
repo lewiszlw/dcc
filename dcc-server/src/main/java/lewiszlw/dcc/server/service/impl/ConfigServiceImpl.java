@@ -6,6 +6,8 @@ import lewiszlw.dcc.server.converter.ConfigConverter;
 import lewiszlw.dcc.server.entity.ConfigEntity;
 import lewiszlw.dcc.server.mapper.ConfigMapper;
 import lewiszlw.dcc.server.service.ConfigService;
+import lewiszlw.dcc.server.util.JsonUtil;
+import lewiszlw.dcc.server.util.ZkUtil;
 import lewiszlw.dcc.server.vo.AddConfigRequest;
 import lewiszlw.dcc.server.vo.ConfigVO;
 import lewiszlw.dcc.server.zookeeper.ZooKeeperService;
@@ -85,23 +87,26 @@ public class ConfigServiceImpl implements ConfigService {
         List<ConfigEntity> configEntities = configVOs.stream()
                 .map(ConfigConverter::configVOToConfigEntity)
                 .collect(Collectors.toList());
-        // TODO zk增加或更新节点
-//        configEntities.stream().forEach(configEntity -> {
-//            zooKeeperService.create(
-//                    ZkUtil.path(configEntity.getApplication(),
-//                            configEntity.getEnv(),
-//                            configEntity.getKey()),
-//                    JsonUtil.toJson(configEntity)
-//            );
-//        });
+
         // 落库
         // 版本号+1
-        configEntities.stream().forEach(configEntity -> {
+        configEntities.forEach(configEntity -> {
             ConfigEntity oldConfigEntity = queryLatestConfig(configEntity.getApplication(),
                     configEntity.getEnv(),
                     configEntity.getKey());
             configEntity.setVersion(oldConfigEntity == null ? Constants.INIT_VERSION : oldConfigEntity.getVersion() + 1);
         });
-        return configMapper.batchInsert(configEntities);
+        int result = configMapper.batchInsert(configEntities);
+
+        // zk增加或更新节点
+        // TODO 比较value是否修改
+        configEntities.forEach(configEntity -> {
+            zooKeeperService.createOrUpdate(
+                    ZkUtil.configPath(configEntity.getApplication(), configEntity.getEnv(), configEntity.getKey()),
+                    JsonUtil.toJson(configEntity)
+            );
+        });
+
+        return result;
     }
 }
