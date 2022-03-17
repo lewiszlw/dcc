@@ -23,7 +23,10 @@ public class HelloController {
     private DccClient dccClient;
 
     @DccConfig
-    private static String config1;
+    private static String configKey1;
+
+    @DccConfig(key = "configKey1")
+    private static String configWithSpecificKey;
 
     @RequestMapping("/hello")
     public String hello() {
@@ -42,7 +45,7 @@ public class HelloController {
 
     @RequestMapping("dcc/configAnnotation")
     public String configAnnotation() {
-        return config1;
+        return String.format("configKey1: %s, configWithSpecificKey: %s", configKey1, configWithSpecificKey);
     }
 
 }

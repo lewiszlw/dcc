@@ -15,16 +15,6 @@ import java.lang.annotation.Target;
 @Target(ElementType.FIELD)
 public @interface DccConfig {
     /**
-     * 应用
-     */
-//    String application() default "";
-
-    /**
-     * 分组
-     */
-//    String group() default "";
-
-    /**
      * 配置项key
      */
     String key() default "";

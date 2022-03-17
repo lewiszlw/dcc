@@ -18,6 +18,7 @@ import org.reflections.util.ConfigurationBuilder;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
+import javax.annotation.PostConstruct;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
@@ -47,7 +48,7 @@ public class DccClient {
     private File cacheFile;
     private ObjectMapper objectMapper;
     private ScheduledExecutorService scheduledExecutorService;
-    private Map<String, String> configCache;
+    private volatile Map<String, String> configCache;
 
     @Reference(version = "1.0.0", check = false)
     private ConfigDubboService configDubboService;
@@ -72,6 +73,7 @@ public class DccClient {
     /**
      * spring bean init
      */
+    @PostConstruct
     private void init() throws IOException {
         // 初始化参数并检查
         initParamAndCheck();
@@ -113,10 +115,9 @@ public class DccClient {
             return configDTOS.stream().collect(Collectors.toMap(ConfigDTO::getKey, ConfigDTO::getValue));
         } catch (Throwable th) {
             log.error("DccClient全量拉取配置异常，使用缓存文件加载配置，配置更新功能将无法使用", th);
-//            Map<String, String> configsFromCacheFile = objectMapper.readValue(cacheFile, Map.class);
-//            log.debug("从缓存文件拉取配置数据：{}", objectMapper.writeValueAsString(configsFromCacheFile));
-//            return configsFromCacheFile;
-            return new HashMap<>();
+            Map<String, String> configsFromCacheFile = objectMapper.readValue(cacheFile, Map.class);
+            log.debug("从缓存文件拉取配置数据：{}", objectMapper.writeValueAsString(configsFromCacheFile));
+            return configsFromCacheFile;
         }
     }
 
@@ -133,7 +134,7 @@ public class DccClient {
             return configDTOS;
         } catch (Throwable th) {
             log.error("DccClient全量拉取配置异常", th);
-            return Collections.EMPTY_LIST;
+            return Collections.emptyList();
         }
     }
 
@@ -143,7 +144,6 @@ public class DccClient {
     private void scanAnnotation() {
         Set<Field> fields = reflections.getFieldsAnnotatedWith(DccConfig.class);
         for (Field field : fields) {
-            // TODO 暂不允许拉取其他应用配置
             DccConfig dccConfig = field.getAnnotation(DccConfig.class);
             String key = StringUtils.isEmpty(dccConfig.key())? field.getName(): dccConfig.key();
             if (configCache.containsKey(key)) {
@@ -185,21 +185,21 @@ public class DccClient {
     /**
      * 更新并持久化缓存
      * @param configs
-     * @param full 是否全量更新
+     * @param fullyUpdate 是否全量更新
      */
-    private void updateAndPersistCache(Map<String, String> configs, boolean full) {
-        if (full) {
-            // 移除缓存中不需要的entry
-            for (Map.Entry<String, String> entry : configCache.entrySet()) {
-                String key = entry.getKey();
-                if (!configs.containsKey(key)) {
-                    configCache.remove(key);
-                } else if (!Objects.equals(configCache.get(key), configs.get(key))) {
-                    // TODO 更新字段 & 通知listener
-                }
-            }
+    private void updateAndPersistCache(Map<String, String> configs, boolean fullyUpdate) {
+        if (configs == null || configs.size() == 0) {
+            return;
         }
-        configCache.putAll(configs);
+        if (fullyUpdate) {
+            // 全量更新
+            for (Map.Entry<String, String> entry : configCache.entrySet()) {
+                // TODO 如果字段发生改变，通知listener
+            }
+            configCache = configs;
+        } else {
+            // TODO 增量更新
+        }
         try {
             // 缓存持久化
             Files.write(objectMapper.writeValueAsBytes(configCache), cacheFile);
