@@ -49,6 +49,7 @@ public class DccClient {
     private ObjectMapper objectMapper;
     private ScheduledExecutorService scheduledExecutorService;
     private volatile Map<String, String> configCache;
+    private Map<String, Set<Field>> keyToFieldsMap;
 
     @Reference(version = "1.0.0", check = false)
     private ConfigDubboService configDubboService;
@@ -61,11 +62,9 @@ public class DccClient {
      */
     public String get(String key) {
         Preconditions.checkArgument(!StringUtils.isEmpty(key), "key is empty");
-        // 容灾：从本地缓存拿数据
         return configCache.get(key);
     }
 
-    // TODO 测试使用，后续删除
     public List<ConfigDTO> allConfigs() {
         return configDubboService.queryConfigs(application, env);
     }
@@ -100,6 +99,7 @@ public class DccClient {
         scheduledExecutorService = new ScheduledThreadPoolExecutor(1,
                 new ThreadFactoryBuilder().setNameFormat("dcc-schedule-pool-%d").setDaemon(true).build());
         configCache = new ConcurrentHashMap<>(100);
+        keyToFieldsMap = new HashMap<>();
     }
 
     /**
@@ -147,8 +147,12 @@ public class DccClient {
             DccConfig dccConfig = field.getAnnotation(DccConfig.class);
             String key = StringUtils.isEmpty(dccConfig.key())? field.getName(): dccConfig.key();
             if (configCache.containsKey(key)) {
-                // 监听并set值
-                watchAndSetField(field, configCache.get(key));
+                // 保存 key与fields 映射关系
+                Set<Field> fieldsUsingSameKey = keyToFieldsMap.getOrDefault(key, new HashSet<>());
+                fieldsUsingSameKey.add(field);
+                keyToFieldsMap.put(key, fieldsUsingSameKey);
+                // 设置field值
+                setFieldValue(field, configCache.get(key));
             } else {
                 log.error("key={} 未进行配置或未生效，请检查", key);
             }
@@ -156,9 +160,9 @@ public class DccClient {
     }
 
     /**
-     * 监听并设置值
+     * 给 @DccConfig 注解的字段设置值
      */
-    private void watchAndSetField(Field field, String value) {
+    private void setFieldValue(Field field, String value) {
         try {
             // TODO 暂时只支持String
             // TODO 给字段设置监听器
@@ -193,8 +197,15 @@ public class DccClient {
         }
         if (fullyUpdate) {
             // 全量更新
-            for (Map.Entry<String, String> entry : configCache.entrySet()) {
+            for (Map.Entry<String, String> entry : configs.entrySet()) {
                 // TODO 如果字段发生改变，通知listener
+                if (!Objects.equals(entry.getValue(), configCache.get(entry.getKey()))) {
+                    Set<Field> fields = keyToFieldsMap.get(entry.getKey());
+                    if (CollectionUtils.isEmpty(fields)) {
+                        continue;
+                    }
+                    fields.forEach(field -> setFieldValue(field, entry.getValue()));
+                }
             }
             configCache = configs;
         } else {
