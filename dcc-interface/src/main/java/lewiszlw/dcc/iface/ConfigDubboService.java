@@ -16,10 +16,10 @@ public interface ConfigDubboService {
     /**
      * 获取应用所有配置
      */
-    List<ConfigDTO> queryAllConfigs(String application, Env env, String group);
+    List<ConfigDTO> queryConfigs(String application, Env env);
 
     /**
      * 获取应用某个配置
      */
-    ConfigDTO queryConfig(String application, Env env, String group, String key);
+    ConfigDTO queryConfig(String application, Env env, String key);
 }

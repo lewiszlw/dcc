@@ -24,16 +24,14 @@ public interface ConfigMapper {
      * 查询应用所有配置的所有版本
      */
     List<ConfigEntity> batchSelectAllVersions(@Param("application") String application,
-                                               @Param("env") Env env,
-                                               @Param("group") String group);
+                                              @Param("env") Env env);
 
     /**
      * 查询一个配置所有版本
      */
     List<ConfigEntity> selectOneAllVersions(@Param("application") String application,
-                                    @Param("env") Env env,
-                                    @Param("group") String group,
-                                    @Param("key") String key);
+                                            @Param("env") Env env,
+                                            @Param("key") String key);
 
     /**
      * 批量插入

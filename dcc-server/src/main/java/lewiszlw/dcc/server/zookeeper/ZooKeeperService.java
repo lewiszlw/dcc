@@ -38,13 +38,13 @@ public class ZooKeeperService implements InitializingBean {
      */
     private void init() throws IOException {
         // TODO 修复zk连接失败
-//        zookeeper = new ZooKeeper(zkURL, 5000, event -> {
-//            if (event.getState() == Watcher.Event.KeeperState.SyncConnected) {
-//                log.info("Zookeeper SyncConnected");
-//            } else {
-//                log.error("Zookeeper is inactive");
-//            }
-//        });
+        zookeeper = new ZooKeeper(zkURL, 5000, event -> {
+            if (event.getState() == Watcher.Event.KeeperState.SyncConnected) {
+                log.info("Zookeeper SyncConnected");
+            } else {
+                log.error("Zookeeper is inactive");
+            }
+        });
     }
 
     /**

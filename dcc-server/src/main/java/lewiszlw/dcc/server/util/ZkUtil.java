@@ -13,22 +13,20 @@ public class ZkUtil {
     private static final String PATH_SEPARATOR = "/";
     private static final String PATH_ROOT = "/dcc";
 
-    public static String path(String application, Env env, String group, String key) {
+    public static String path(String application, Env env, String key) {
         StringBuilder path = new StringBuilder();
         path.append(PATH_ROOT)
                 .append(PATH_SEPARATOR).append(application)
                 .append(PATH_SEPARATOR).append(env)
-                .append(PATH_SEPARATOR).append(group)
                 .append(PATH_SEPARATOR).append(key);
         return path.toString();
     }
 
-    public static String path(String application, Env env, String group) {
+    public static String path(String application, Env env) {
         StringBuilder path = new StringBuilder();
         path.append(PATH_ROOT)
                 .append(PATH_SEPARATOR).append(application)
-                .append(PATH_SEPARATOR).append(env)
-                .append(PATH_SEPARATOR).append(group);
+                .append(PATH_SEPARATOR).append(env);
         return path.toString();
     }
 

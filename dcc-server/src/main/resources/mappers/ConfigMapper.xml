@@ -27,14 +27,12 @@
         select * from dcc_config
         where application = #{application}
         and env = #{env}
-        and `group` = #{group}
     </select>
 
     <select id="selectOneAllVersions" resultMap="BaseResultMap" >
         select * from dcc_config
         where application = #{application}
         and env = #{env}
-        and `group` = #{group}
         and `key` = #{key}
     </select>
 
@@ -42,13 +40,14 @@
         insert into dcc_config
         (<include refid="baseColumns" />)
         values
-        <foreach collection="list" item="configEntity" separator="," >
+        <foreach collection="configEntities" item="configEntity" separator="," >
             (
             #{configEntity.application},
-            #{configEntity.env, typeHandler=EnumTypeHandler},
+            #{configEntity.env, typeHandler=org.apache.ibatis.type.EnumTypeHandler},
             #{configEntity.group},
             #{configEntity.key},
             #{configEntity.version},
+            #{configEntity.value},
             #{configEntity.comment},
             now()
             )

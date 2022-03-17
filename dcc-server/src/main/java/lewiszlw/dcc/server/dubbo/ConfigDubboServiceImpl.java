@@ -28,17 +28,17 @@ public class ConfigDubboServiceImpl implements ConfigDubboService {
     private ConfigService configService;
 
     @Override
-    public List<ConfigDTO> queryAllConfigs(String application, Env env, String group) {
-        List<ConfigEntity> configEntities = configService.queryConfigsLatest(application, env, group);
+    public List<ConfigDTO> queryConfigs(String application, Env env) {
+        List<ConfigEntity> configEntities = configService.queryLatestConfigs(application, env);
         if (CollectionUtils.isEmpty(configEntities)) {
-            return Collections.EMPTY_LIST;
+            return Collections.emptyList();
         }
         return configEntities.stream().map(ConfigConverter::configEntityToConfigDTO).collect(Collectors.toList());
     }
 
     @Override
-    public ConfigDTO queryConfig(String application, Env env, String group, String key) {
-        ConfigEntity configEntity = configService.queryConfigLatest(application, env, group, key);
+    public ConfigDTO queryConfig(String application, Env env, String key) {
+        ConfigEntity configEntity = configService.queryLatestConfig(application, env, key);
         return Objects.isNull(configEntity)? null: ConfigConverter.configEntityToConfigDTO(configEntity);
     }
 }

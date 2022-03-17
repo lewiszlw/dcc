@@ -42,7 +42,7 @@ public class ConfigMapperTest {
                                                         .setValue(value)
                                                         .setComment(comment);
         Assert.assertTrue(configMapper.batchInsert(Lists.newArrayList(configEntity)) == 1);
-        List<ConfigEntity> configEntities = configMapper.selectOneAllVersions("test-app", Env.TEST, Constants.DEFAULT_GROUP, "test-key");
+        List<ConfigEntity> configEntities = configMapper.selectOneAllVersions("test-app", Env.TEST, "test-key");
         Assert.assertTrue(configEntities.size() == 1);
         ConfigEntity configEntityFromDB = configEntities.get(0);
         Assert.assertTrue(configEntityFromDB.getApplication().equals(application));

@@ -1,64 +1,30 @@
-![build-status](https://travis-ci.com/lewiszlw/dcc.svg?branch=master)
 # 项目简介
 DCC (Distributed Config Center)，一个轻量级的分布式配置中心。
 
+TODO
+- [ ] dccClient.get("xxx") 实时获取配置
+- [ ] @DccConfig 注解来获取配置
+- [ ] 支持监听配置修改事件
+- [ ] 配置修改历史 
+- [ ] 配置灰度发布
+- [ ] 支持回滚配置
+- [ ] 配置修改权限控制
+- [ ] 容灾能力（dcc-server宕机尽可能不影响应用程序）
+
 # 开始
 ## 服务端
-1.安装zookeeper
+1. 安装 Zookeeper 和 MySQL
+2. 执行 sql/create_tables.sql
+3. 在 application.properties 配置 zookeeper 和 MySQL 
+4. 运行 DccServerApplication 启动 dcc-server
 
-2.启动dcc-server
-
-## 客户端
-1.引入maven依赖
-```xml
-<dependency>
-    <groupId>lewiszlw</groupId>
-    <artifactId>dcc-client</artifactId>
-    <version>0.1.1-SNAPSHOT</version>
-</dependency>
-```
-2.配置DccClient
-```java
-@Configuration
-public class DccClientConfig {
-
-    @Bean(initMethod = "init", destroyMethod = "destroy")
-    public DccClient dccConfigClient() {
-        DccClient dccClient = new DccClient();
-        dccClient.setApplication("dcc-demo");
-        dccClient.setEnv(Env.TEST);
-        // 分组配置，默认取default
-        // dccClient.setGroup("default");
-        // 扫描包路径，默认扫描全部
-        // dccClient.setScanBasePackages(".");
-        // 本地缓存持久化文件路径，默认为/opt/dcc/cache，需提前赋予读写权限
-        // dccClient.setCacheFilePath("/opt/dcc/cache");
-        // 定时全量拉取周期，默认180秒拉取一次
-        // dccClient.setPeriod(180);
-        return dccClient;
-    }
-}
-```
-3.配置文件application.properties
-```
-# dubbo
-dubbo.application.name=dubbo-demo
-dubbo.registry.address=zookeeper://127.0.0.1:2181
-dubbo.consumer.timeout=3000
-```
-4.启动类引入DubboConsumerConfig
-```java
-@SpringBootApplication
-@Import(DubboConsumerConfig.class)
-public class DccDemoApplication {
-
-    public static void main(String[] args) {
-        SpringApplication.run(DccDemoApplication.class, args);
-    }
-
-}
-```
-4.使用DccClient动态配置
+## 应用程序
+1. 创建 /opt/dcc/cache 文件并赋予权限 `sudo chmod -R 777 /opt/dcc`
+2. 引入 dcc-client maven依赖
+3. 配置 DccClient bean （见 DccClientConfig.java）
+4. application.properties 配置 dubbo
+5. 启动类 DccDemoApplication 引入 DubboConsumerConfig
+6. 使用DccClient动态配置
 ```java
 // 1.使用client
 @Autowired

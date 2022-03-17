@@ -7,5 +7,5 @@ package lewiszlw.dcc.iface.constant;
  * @date 2019-04-24
  */
 public enum Env {
-    UNKNOWN, DEV, LOCAL, TEST, BETA, STAGING, PROD;
+    UNKNOWN, TEST, PROD;
 }

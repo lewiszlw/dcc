@@ -15,7 +15,13 @@ import java.util.List;
 @Accessors(chain = true)
 public class AddConfigRequest {
 
+    /**
+     * 用户名称
+     */
     private String operator;
 
-    private List<ConfigVO> configVOS;
+    /**
+     * 需增加的配置
+     */
+    private List<ConfigVO> configVOs;
 }

@@ -6,19 +6,15 @@ import lewiszlw.dcc.server.converter.ConfigConverter;
 import lewiszlw.dcc.server.entity.ConfigEntity;
 import lewiszlw.dcc.server.mapper.ConfigMapper;
 import lewiszlw.dcc.server.service.ConfigService;
-import lewiszlw.dcc.server.util.JsonUtil;
-import lewiszlw.dcc.server.util.ZkUtil;
 import lewiszlw.dcc.server.vo.AddConfigRequest;
 import lewiszlw.dcc.server.vo.ConfigVO;
 import lewiszlw.dcc.server.zookeeper.ZooKeeperService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -28,6 +24,7 @@ import java.util.stream.Collectors;
  * @date 2019-04-26
  */
 @Service
+@Slf4j
 public class ConfigServiceImpl implements ConfigService {
 
     @Autowired
@@ -42,80 +39,69 @@ public class ConfigServiceImpl implements ConfigService {
     }
 
     @Override
-    public List<ConfigEntity> queryConfigsLatest(String application, Env env, String group) {
-        List<String> children = zooKeeperService.getChildren(ZkUtil.path(application, env, group));
-        if (!CollectionUtils.isEmpty(children)) {
-            List<ConfigEntity> list = new ArrayList<>();
-            for (String key : children) {
-                String data = zooKeeperService.get(ZkUtil.path(application, env, group, key));
-                list.add(JsonUtil.fromJson(data, ConfigEntity.class));
-            }
-            return list;
+    public List<ConfigEntity> queryLatestConfigs(String application, Env env) {
+        // 获取该应用所有版本配置
+        List<ConfigEntity> configEntities = configMapper.batchSelectAllVersions(application, env);
+        if (CollectionUtils.isEmpty(configEntities)) {
+            return Collections.emptyList();
         }
-        return Collections.EMPTY_LIST;
+
+        // 过滤得到所有最新版本配置
+        Map<String, ConfigEntity> keyToLatestConfigEntityMap = new HashMap<>();
+        for (ConfigEntity configEntity : configEntities) {
+            if (keyToLatestConfigEntityMap.containsKey(configEntity.getKey())) {
+                if (configEntity.getVersion() > keyToLatestConfigEntityMap.get(configEntity.getKey()).getVersion()) {
+                    keyToLatestConfigEntityMap.put(configEntity.getKey(), configEntity);
+                }
+            } else {
+                keyToLatestConfigEntityMap.put(configEntity.getKey(), configEntity);
+            }
+        }
+
+        return new ArrayList<>(keyToLatestConfigEntityMap.values());
     }
 
     @Override
-    public ConfigEntity queryConfigLatest(String application, Env env, String group, String key) {
-        String data = zooKeeperService.get(ZkUtil.path(application, env, group, key));
-        return JsonUtil.fromJson(data, ConfigEntity.class);
+    public ConfigEntity queryLatestConfig(String application, Env env, String key) {
+        // 获取该应用所有版本配置
+        List<ConfigEntity> configEntities = configMapper.selectOneAllVersions(application, env, key);
+        if (CollectionUtils.isEmpty(configEntities)) {
+            return null;
+        }
+
+        // 根据版本升序排列
+        List<ConfigEntity> sortedConfigEntities = configEntities.stream()
+                .sorted(Comparator.comparing(ConfigEntity::getVersion)).collect(Collectors.toList());
+
+        return sortedConfigEntities.get(sortedConfigEntities.size() - 1);
     }
 
     @Override
     public Integer addConfigs(AddConfigRequest addConfigRequest) {
-        List<ConfigVO> configVOS = addConfigRequest.getConfigVOS();
-        if (CollectionUtils.isEmpty(configVOS)) {
+        List<ConfigVO> configVOs = addConfigRequest.getConfigVOs();
+        if (CollectionUtils.isEmpty(configVOs)) {
             return 0;
         }
-        List<ConfigEntity> configEntities = configVOS.stream()
+        List<ConfigEntity> configEntities = configVOs.stream()
                 .map(ConfigConverter::configVOToConfigEntity)
-                .map(configEntity -> {return configEntity.setVersion(1);})
                 .collect(Collectors.toList());
-        // zk新增节点
-        configEntities.stream().forEach(configEntity -> {
-            zooKeeperService.create(
-                    ZkUtil.path(configEntity.getApplication(),
-                            configEntity.getEnv(),
-                            configEntity.getGroup(),
-                            configEntity.getKey()),
-                    JsonUtil.toJson(configEntity)
-            );
-        });
+        // TODO zk增加或更新节点
+//        configEntities.stream().forEach(configEntity -> {
+//            zooKeeperService.create(
+//                    ZkUtil.path(configEntity.getApplication(),
+//                            configEntity.getEnv(),
+//                            configEntity.getKey()),
+//                    JsonUtil.toJson(configEntity)
+//            );
+//        });
         // 落库
-        writeDB(configEntities);
-        return configEntities.size();
-    }
-
-    private synchronized Integer writeDB(List<ConfigEntity> configEntities) {
-        // TODO
-        if (CollectionUtils.isEmpty(configEntities)) {
-            return 0;
-        }
-        // 版本号填充
+        // 版本号+1
         configEntities.stream().forEach(configEntity -> {
-            Integer latestVersion = queryConfigLatestVersion(configEntity.getApplication(),
-                                                            configEntity.getEnv(),
-                                                            configEntity.getGroup(),
-                                                            configEntity.getKey());
-            configEntity.setVersion(latestVersion == null? Constants.INIT_VERSION : latestVersion + 1);
+            ConfigEntity oldConfigEntity = queryLatestConfig(configEntity.getApplication(),
+                    configEntity.getEnv(),
+                    configEntity.getKey());
+            configEntity.setVersion(oldConfigEntity == null ? Constants.INIT_VERSION : oldConfigEntity.getVersion() + 1);
         });
         return configMapper.batchInsert(configEntities);
-    }
-
-
-    @Override
-    public List<ConfigEntity> queryConfigsAllVersion(String application, Env env, String group, String key) {
-        return configMapper.selectOneAllVersions(application, env, group, key);
-    }
-
-    @Override
-    public Integer queryConfigLatestVersion(String application, Env env, String group, String key) {
-        List<ConfigEntity> configEntities = configMapper.selectOneAllVersions(application, env, group, key);
-        if (CollectionUtils.isEmpty(configEntities)) {
-            return null;
-        }
-        List<ConfigEntity> entities = configEntities.stream()
-                .sorted(Comparator.comparingInt(ConfigEntity::getVersion)).collect(Collectors.toList());
-        return entities.get(entities.size() - 1).getVersion();
     }
 }

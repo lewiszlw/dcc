@@ -39,7 +39,6 @@ public class DccClient {
 
     private String application;
     private Env env;
-    private String group = "default";
     private String scanBasePackages = ".";
     private String cacheFilePath = "/opt/dcc/cache";
     private long period = 180;
@@ -67,7 +66,7 @@ public class DccClient {
 
     // TODO 测试使用，后续删除
     public List<ConfigDTO> allConfigs() {
-        return configDubboService.queryAllConfigs(application, env, group);
+        return configDubboService.queryConfigs(application, env);
     }
 
     /**
@@ -106,7 +105,7 @@ public class DccClient {
      */
     private Map<String, String> initLoadConfigs() throws IOException {
         try {
-            List<ConfigDTO> configDTOS = configDubboService.queryAllConfigs(application, env, group);
+            List<ConfigDTO> configDTOS = configDubboService.queryConfigs(application, env);
             log.debug("初始化从server端拉取配置数据：{}", objectMapper.writeValueAsString(configDTOS));
             if (CollectionUtils.isEmpty(configDTOS)) {
                 log.warn("DccClient全量拉取配置为空，请确认是否存在异常");
@@ -114,9 +113,10 @@ public class DccClient {
             return configDTOS.stream().collect(Collectors.toMap(ConfigDTO::getKey, ConfigDTO::getValue));
         } catch (Throwable th) {
             log.error("DccClient全量拉取配置异常，使用缓存文件加载配置，配置更新功能将无法使用", th);
-            Map<String, String> configsFromCacheFile = objectMapper.readValue(cacheFile, Map.class);
-            log.debug("从缓存文件拉取配置数据：{}", objectMapper.writeValueAsString(configsFromCacheFile));
-            return configsFromCacheFile;
+//            Map<String, String> configsFromCacheFile = objectMapper.readValue(cacheFile, Map.class);
+//            log.debug("从缓存文件拉取配置数据：{}", objectMapper.writeValueAsString(configsFromCacheFile));
+//            return configsFromCacheFile;
+            return new HashMap<>();
         }
     }
 
@@ -125,7 +125,7 @@ public class DccClient {
      */
     private List<ConfigDTO> pullFromServer() {
         try {
-            List<ConfigDTO> configDTOS = configDubboService.queryAllConfigs(application, env, group);
+            List<ConfigDTO> configDTOS = configDubboService.queryConfigs(application, env);
             log.debug("从server端全量拉取配置数据：{}", objectMapper.writeValueAsString(configDTOS));
             if (CollectionUtils.isEmpty(configDTOS)) {
                 log.warn("DccClient全量拉取配置为空，请确认是否存在异常");
@@ -231,14 +231,6 @@ public class DccClient {
 
     public void setEnv(Env env) {
         this.env = env;
-    }
-
-    public String getGroup() {
-        return group;
-    }
-
-    public void setGroup(String group) {
-        this.group = group;
     }
 
     public String getScanBasePackages() {
