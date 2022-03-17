@@ -4,12 +4,12 @@ DCC (Distributed Config Center)，一个轻量级的分布式配置中心。
 TODO
 - [x] dccClient.get("xxx") 实时获取配置
 - [x] @DccConfig 注解来获取配置
+- [x] 容灾能力（dcc-server宕机不影响客户端应用程序正常启动和运行）
 - [ ] 支持监听配置修改事件
 - [ ] 配置修改历史 
 - [ ] 配置灰度发布
 - [ ] 支持回滚配置
 - [ ] 配置修改权限控制
-- [ ] 容灾能力（dcc-server宕机尽可能不影响应用程序）
 
 # 开始
 ## 模块说明
@@ -21,7 +21,7 @@ TODO
 ## 服务端
 1. 安装 Zookeeper 和 MySQL
 2. 执行 sql/create_tables.sql
-3. 在 application.properties 配置 zookeeper 和 MySQL 
+3. 在 application.properties 配置 Zookeeper 和 MySQL 
 4. 运行 DccServerApplication 启动 dcc-server
 
 ## 客户端应用程序
@@ -36,6 +36,7 @@ TODO
 private DccClient dccClient;
 
 dccClient.get("configKey");
+dccClient.getAll();
 
 // 2.使用注解
 @DccConfig

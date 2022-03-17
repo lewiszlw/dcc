@@ -65,8 +65,8 @@ public class DccClient {
         return configCache.get(key);
     }
 
-    public List<ConfigDTO> allConfigs() {
-        return configDubboService.queryConfigs(application, env);
+    public Map<String, String> getAll() {
+        return configCache;
     }
 
     /**
@@ -116,7 +116,7 @@ public class DccClient {
         } catch (Throwable th) {
             log.error("DccClient全量拉取配置异常，使用缓存文件加载配置，配置更新功能将无法使用", th);
             Map<String, String> configsFromCacheFile = objectMapper.readValue(cacheFile, Map.class);
-            log.debug("从缓存文件拉取配置数据：{}", objectMapper.writeValueAsString(configsFromCacheFile));
+            log.info("从本地文件拉取配置数据：{}", objectMapper.writeValueAsString(configsFromCacheFile));
             return configsFromCacheFile;
         }
     }

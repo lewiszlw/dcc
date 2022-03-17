@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Desc:
@@ -34,8 +35,8 @@ public class HelloController {
     }
 
     @RequestMapping("/dcc/all")
-    public List<ConfigDTO> dccAllConfigs() {
-        return dccClient.allConfigs();
+    public Map<String, String> dccAllConfigs() {
+        return dccClient.getAll();
     }
 
     @RequestMapping("/dcc/one")
