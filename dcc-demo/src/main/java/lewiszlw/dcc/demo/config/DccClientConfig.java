@@ -25,7 +25,7 @@ public class DccClientConfig {
         // dccClient.setCacheFilePath("/opt/dcc/cache");
         // 定时全量拉取周期，默认180秒拉取一次
         // dccClient.setPeriod(180);
-        dccClient.setPeriod(5);
+        dccClient.setPeriod(60);
         return dccClient;
     }
 }

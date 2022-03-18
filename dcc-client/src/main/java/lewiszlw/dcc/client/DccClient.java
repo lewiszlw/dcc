@@ -2,6 +2,7 @@ package lewiszlw.dcc.client;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Maps;
 import com.google.common.io.Files;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import lewiszlw.dcc.client.annotation.DccConfig;
@@ -9,10 +10,17 @@ import lewiszlw.dcc.client.util.FileUtil;
 import lewiszlw.dcc.iface.ConfigDubboService;
 import lewiszlw.dcc.iface.constant.Env;
 import lewiszlw.dcc.iface.response.ConfigDTO;
+import lewiszlw.dcc.iface.util.ZkUtil;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.curator.framework.CuratorFramework;
+import org.apache.curator.framework.CuratorFrameworkFactory;
+import org.apache.curator.framework.recipes.cache.PathChildrenCache;
+import org.apache.curator.framework.recipes.cache.PathChildrenCacheEvent;
+import org.apache.curator.framework.recipes.cache.PathChildrenCacheListener;
+import org.apache.curator.retry.ExponentialBackoffRetry;
 import org.apache.dubbo.config.annotation.Reference;
 import org.reflections.Reflections;
 import org.reflections.scanners.FieldAnnotationsScanner;
@@ -21,7 +29,6 @@ import org.reflections.util.ConfigurationBuilder;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
-import javax.annotation.PostConstruct;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
@@ -42,6 +49,10 @@ import java.util.stream.Collectors;
 @NoArgsConstructor
 public class DccClient {
 
+    private static final String ZK_URL = "127.0.0.1:2181";
+    private static final int SESSION_TIMEOUT_MS = 60000;
+    private static final int CONNECTION_TIMEOUT_MS = 15000;
+
     @Getter @Setter
     private String application;
     @Getter @Setter
@@ -59,6 +70,7 @@ public class DccClient {
     private ScheduledExecutorService scheduledExecutorService;
     private volatile Map<String, String> configCache;
     private Map<String, Set<Field>> keyToFieldsMap;
+    private CuratorFramework zkClient;
 
     @Reference(version = "1.0.0", check = false)
     private ConfigDubboService configDubboService;
@@ -81,16 +93,15 @@ public class DccClient {
     /**
      * spring bean init
      */
-    @PostConstruct
-    private void init() throws IOException {
+    private void init() throws Exception {
         // 初始化参数并检查
         initParamAndCheck();
         // 全量拉取配置到cache
         updateAndPersistCache(initLoadConfigs(), true);
         // 扫描注解，给字段注入配置value
         scanAnnotation();
-        // TODO 通过在父节点添加watcher来监听所有配置变化
-
+        // 初始化zk，通过在父节点添加watcher来监听所有配置变化
+        initZkClientAndRegisterListener();
         // 启动定时任务
         startScheduledTask();
     }
@@ -218,18 +229,84 @@ public class DccClient {
                     if (CollectionUtils.isEmpty(fields)) {
                         continue;
                     }
+                    // 更新注解字段
                     fields.forEach(field -> setFieldValue(field, entry.getValue()));
                 }
             }
+            // 全量更新cache
             configCache = configs;
         } else {
-            // TODO 增量更新
+            // 增量更新
+            for (Map.Entry<String, String> entry : configs.entrySet()) {
+                // TODO 如果字段发生改变，通知listener
+                if (!Objects.equals(entry.getValue(), configCache.get(entry.getKey()))) {
+                    Set<Field> fields = keyToFieldsMap.get(entry.getKey());
+                    if (CollectionUtils.isEmpty(fields)) {
+                        continue;
+                    }
+                    // 更新注解字段
+                    fields.forEach(field -> setFieldValue(field, entry.getValue()));
+                    // 更新cache
+                    configCache.put(entry.getKey(), entry.getValue());
+                }
+
+            }
         }
         try {
             // 缓存持久化
             Files.write(objectMapper.writeValueAsBytes(configCache), cacheFile);
         } catch (IOException e) {
             log.error("dcc缓存持久化异常", e);
+        }
+    }
+
+    public void initZkClientAndRegisterListener() throws Exception {
+        this.zkClient = CuratorFrameworkFactory.builder()
+                .connectString(ZK_URL)
+                .sessionTimeoutMs(SESSION_TIMEOUT_MS)
+                .connectionTimeoutMs(CONNECTION_TIMEOUT_MS)
+                .retryPolicy(new ExponentialBackoffRetry(1000, 100))
+                .build();
+        this.zkClient.start();
+
+        PathChildrenCache pathChildrenCache = new PathChildrenCache(this.zkClient, ZkUtil.path(application, env), true);
+        pathChildrenCache.getListenable().addListener(new ApplicationConfigsListener());
+        pathChildrenCache.start(PathChildrenCache.StartMode.BUILD_INITIAL_CACHE);
+    }
+
+    class ApplicationConfigsListener implements PathChildrenCacheListener {
+        @Override
+        public void childEvent(CuratorFramework curatorFramework, PathChildrenCacheEvent pathChildrenCacheEvent) throws Exception {
+            if (pathChildrenCacheEvent.getType() != PathChildrenCacheEvent.Type.CHILD_ADDED
+                    && pathChildrenCacheEvent.getType() != PathChildrenCacheEvent.Type.CHILD_UPDATED
+                    && pathChildrenCacheEvent.getType() != PathChildrenCacheEvent.Type.CHILD_REMOVED) {
+                log.info("Received zookeeper event, type={}", pathChildrenCacheEvent.getType());
+                return;
+            }
+
+            String configJson = new String(pathChildrenCacheEvent.getData().getData());
+            log.info("Received zookeeper event, type={}, path={}, data={}",
+                    pathChildrenCacheEvent.getType(), pathChildrenCacheEvent.getData().getPath(), configJson);
+            ConfigDTO configDTO = objectMapper.readValue(configJson, ConfigDTO.class);
+            if (configDTO == null) {
+                log.error("Parsed configDTO from zookeeper node is null");
+                return;
+            }
+
+            if (pathChildrenCacheEvent.getType() == PathChildrenCacheEvent.Type.CHILD_ADDED) {
+                Map<String, String> configs = new HashMap<>();
+                configs.put(configDTO.getKey(), configDTO.getValue());
+                updateAndPersistCache(configs, false);
+            }
+            if (pathChildrenCacheEvent.getType() == PathChildrenCacheEvent.Type.CHILD_UPDATED) {
+                Map<String, String> configs = new HashMap<>();
+                configs.put(configDTO.getKey(), configDTO.getValue());
+                updateAndPersistCache(configs, false);
+            }
+            // TODO 删除配置处理
+            if (pathChildrenCacheEvent.getType() == PathChildrenCacheEvent.Type.CHILD_REMOVED) {
+                configCache.remove(configDTO.getKey());
+            }
         }
     }
 

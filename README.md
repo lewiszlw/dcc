@@ -6,6 +6,8 @@ TODO
 - [x] @DccConfig 注解来获取配置
 - [x] 容灾能力（dcc-server宕机不影响客户端应用程序正常启动和运行）
 - [x] 多版本配置
+- [x] 配置实时推送更新
+- [x] 配置定时拉取
 - [ ] 支持监听配置修改事件
 - [ ] 配置灰度发布
 - [ ] 支持回滚配置
@@ -23,6 +25,9 @@ TODO
 2. 执行 sql/create_tables.sql
 3. 在 application.properties 配置 Zookeeper 和 MySQL 
 4. 运行 DccServerApplication 启动 dcc-server
+
+## 客户端SDK
+1. 将 DccClient.ZK_URL 配置与服务端 ZK 地址保持一致
 
 ## 客户端应用程序
 1. 创建 /opt/dcc/cache 文件并赋予权限 `sudo chmod -R 777 /opt/dcc`
@@ -45,3 +50,6 @@ private static String configKey1; // key为变量名
 @DccConfig(key = "configKey2")
 private static String config;
 ```
+
+# FAQ
+**1. group 是做什么的？**

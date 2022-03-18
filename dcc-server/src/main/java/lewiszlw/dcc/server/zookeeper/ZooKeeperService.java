@@ -2,7 +2,7 @@ package lewiszlw.dcc.server.zookeeper;
 
 import lewiszlw.dcc.server.exception.ZooKeeperException;
 import lewiszlw.dcc.server.util.JsonUtil;
-import lewiszlw.dcc.server.util.ZkUtil;
+import lewiszlw.dcc.iface.util.ZkUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.zookeeper.*;
 import org.apache.zookeeper.data.Stat;

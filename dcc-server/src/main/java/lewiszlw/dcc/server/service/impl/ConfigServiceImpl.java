@@ -7,7 +7,7 @@ import lewiszlw.dcc.server.entity.ConfigEntity;
 import lewiszlw.dcc.server.mapper.ConfigMapper;
 import lewiszlw.dcc.server.service.ConfigService;
 import lewiszlw.dcc.server.util.JsonUtil;
-import lewiszlw.dcc.server.util.ZkUtil;
+import lewiszlw.dcc.iface.util.ZkUtil;
 import lewiszlw.dcc.server.vo.AddConfigRequest;
 import lewiszlw.dcc.server.vo.ConfigVO;
 import lewiszlw.dcc.server.zookeeper.ZooKeeperService;
@@ -103,7 +103,7 @@ public class ConfigServiceImpl implements ConfigService {
         configEntities.forEach(configEntity -> {
             zooKeeperService.createOrUpdate(
                     ZkUtil.configPath(configEntity.getApplication(), configEntity.getEnv(), configEntity.getKey()),
-                    JsonUtil.toJson(configEntity)
+                    JsonUtil.toJson(ConfigConverter.configEntityToConfigDTO(configEntity))
             );
         });
 

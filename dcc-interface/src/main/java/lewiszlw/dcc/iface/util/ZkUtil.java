@@ -1,4 +1,4 @@
-package lewiszlw.dcc.server.util;
+package lewiszlw.dcc.iface.util;
 
 import lewiszlw.dcc.iface.constant.Env;
 

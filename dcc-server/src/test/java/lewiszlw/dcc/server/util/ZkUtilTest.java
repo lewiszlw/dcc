@@ -1,6 +1,7 @@
 package lewiszlw.dcc.server.util;
 
 import lewiszlw.dcc.iface.constant.Env;
+import lewiszlw.dcc.iface.util.ZkUtil;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
