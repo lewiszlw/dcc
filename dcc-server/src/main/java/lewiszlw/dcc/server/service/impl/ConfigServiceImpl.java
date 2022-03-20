@@ -1,5 +1,6 @@
 package lewiszlw.dcc.server.service.impl;
 
+import com.google.common.collect.Lists;
 import lewiszlw.dcc.iface.constant.Env;
 import lewiszlw.dcc.server.constant.Constants;
 import lewiszlw.dcc.server.converter.ConfigConverter;
@@ -10,6 +11,7 @@ import lewiszlw.dcc.server.util.JsonUtil;
 import lewiszlw.dcc.iface.util.ZkUtil;
 import lewiszlw.dcc.server.vo.AddConfigRequest;
 import lewiszlw.dcc.server.vo.ConfigVO;
+import lewiszlw.dcc.server.vo.RollbackRequest;
 import lewiszlw.dcc.server.zookeeper.ZooKeeperService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -79,6 +81,11 @@ public class ConfigServiceImpl implements ConfigService {
     }
 
     @Override
+    public List<ConfigEntity> queryConfigVersions(String application, Env env, String key) {
+        return configMapper.selectOneAllVersions(application, env, key);
+    }
+
+    @Override
     public Integer addConfigs(AddConfigRequest addConfigRequest) {
         List<ConfigVO> configVOs = addConfigRequest.getConfigVOs();
         if (CollectionUtils.isEmpty(configVOs)) {
@@ -107,6 +114,29 @@ public class ConfigServiceImpl implements ConfigService {
             );
         });
 
+        return result;
+    }
+
+    @Override
+    public Integer rollback(RollbackRequest request) {
+        ConfigEntity targetConfigEntity = configMapper.selectSpecificVersionConfig(
+                request.getApplication(),
+                request.getEnv(),
+                request.getKey(),
+                request.getTargetVersion());
+        if (targetConfigEntity == null) {
+            return 0;
+        }
+        ConfigEntity latestConfigEntity = queryLatestConfig(request.getApplication(), request.getEnv(), request.getKey());
+        if (targetConfigEntity.getVersion() == latestConfigEntity.getVersion()
+                || Objects.equals(targetConfigEntity.getValue(), latestConfigEntity.getValue())) {
+            return 0;
+        }
+        targetConfigEntity.setVersion(latestConfigEntity.getVersion() + 1);
+        Integer result = configMapper.batchInsert(Lists.newArrayList(targetConfigEntity));
+        zooKeeperService.createOrUpdate(
+                ZkUtil.configPath(targetConfigEntity.getApplication(), targetConfigEntity.getEnv(), targetConfigEntity.getKey()),
+                JsonUtil.toJson(ConfigConverter.configEntityToConfigDTO(targetConfigEntity)));
         return result;
     }
 }

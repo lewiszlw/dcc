@@ -36,6 +36,14 @@
         and `key` = #{key}
     </select>
 
+    <select id="selectSpecificVersionConfig" resultMap="BaseResultMap" >
+        select * from dcc_config
+        where application = #{application}
+        and env = #{env}
+        and `key` = #{key}
+        and version = #{version}
+    </select>
+
     <insert id="batchInsert" >
         insert into dcc_config
         (<include refid="baseColumns" />)

@@ -3,6 +3,7 @@ package lewiszlw.dcc.server.controller;
 import lewiszlw.dcc.iface.constant.Env;
 import lewiszlw.dcc.server.service.ConfigService;
 import lewiszlw.dcc.server.vo.AddConfigRequest;
+import lewiszlw.dcc.server.vo.RollbackRequest;
 import lewiszlw.dcc.server.vo.WebResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,9 +43,21 @@ public class ConfigController {
         return WebResponse.createSuccessWebResponse(configService.queryLatestConfig(application, env, key));
     }
 
+    @GetMapping("/history")
+    public WebResponse queryConfigVersions(@RequestParam String application,
+                                           @RequestParam Env env,
+                                           @RequestParam String key) {
+        return WebResponse.createSuccessWebResponse(configService.queryConfigVersions(application, env, key));
+    }
+
     @PostMapping("/add")
     public WebResponse addConfigs(@RequestBody AddConfigRequest addConfigRequest) {
         return WebResponse.createSuccessWebResponse(configService.addConfigs(addConfigRequest));
+    }
+
+    @PostMapping("/rollback")
+    public WebResponse rollback(@RequestBody RollbackRequest request) {
+        return WebResponse.createSuccessWebResponse(configService.rollback(request));
     }
 
 }

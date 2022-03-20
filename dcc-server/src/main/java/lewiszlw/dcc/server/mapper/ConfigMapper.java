@@ -34,6 +34,14 @@ public interface ConfigMapper {
                                             @Param("key") String key);
 
     /**
+     * 查询指定版本的配置
+     */
+    ConfigEntity selectSpecificVersionConfig(@Param("application") String application,
+                                            @Param("env") Env env,
+                                            @Param("key") String key,
+                                            @Param("version") int version);
+
+    /**
      * 批量插入
      */
     Integer batchInsert(@Param("configEntities") List<ConfigEntity> configEntities);

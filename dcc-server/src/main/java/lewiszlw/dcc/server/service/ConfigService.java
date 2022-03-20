@@ -3,6 +3,7 @@ package lewiszlw.dcc.server.service;
 import lewiszlw.dcc.iface.constant.Env;
 import lewiszlw.dcc.server.entity.ConfigEntity;
 import lewiszlw.dcc.server.vo.AddConfigRequest;
+import lewiszlw.dcc.server.vo.RollbackRequest;
 
 import java.util.List;
 
@@ -30,7 +31,17 @@ public interface ConfigService {
     ConfigEntity queryLatestConfig(String application, Env env, String key);
 
     /**
+     * 获取配置所有版本
+     */
+    List<ConfigEntity> queryConfigVersions(String application, Env env, String key);
+
+    /**
      * 批量添加配置
      */
     Integer addConfigs(AddConfigRequest addConfigRequest);
+
+    /**
+     * 回滚配置
+     */
+    Integer rollback(RollbackRequest request);
 }
