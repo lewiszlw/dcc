@@ -167,7 +167,7 @@ public class DccClient {
         Set<Field> fields = reflections.getFieldsAnnotatedWith(DccConfig.class);
         for (Field field : fields) {
             DccConfig dccConfig = field.getAnnotation(DccConfig.class);
-            String key = StringUtils.isEmpty(dccConfig.key())? field.getName(): dccConfig.key();
+            String key = StringUtils.isEmpty(dccConfig.key()) ? field.getName(): dccConfig.key();
             if (configCache.containsKey(key)) {
                 // 保存 key与fields 映射关系
                 Set<Field> fieldsUsingSameKey = keyToFieldsMap.getOrDefault(key, new HashSet<>());
@@ -186,12 +186,25 @@ public class DccClient {
      */
     private void setFieldValue(Field field, String value) {
         try {
-            // TODO 暂时只支持String
-            // TODO 给字段设置监听器
             field.setAccessible(true);
-            field.set(field.getDeclaringClass(), value);
-        } catch (IllegalAccessException e) {
-            log.error("field={} value={} 设置值异常", field.getName(), value, e);
+            if (String.class.equals(field.getType())) {
+                field.set(field.getDeclaringClass(), value);
+            }
+            if (Integer.class.equals(field.getType())) {
+                field.set(field.getDeclaringClass(), Integer.parseInt(value));
+            }
+            if (Long.class.equals(field.getType())) {
+                field.set(field.getDeclaringClass(), Long.parseLong(value));
+            }
+            if (Float.class.equals(field.getType())) {
+                field.set(field.getDeclaringClass(), Float.parseFloat(value));
+            }
+            if (Double.class.equals(field.getType())) {
+                field.set(field.getDeclaringClass(), Double.parseDouble(value));
+            }
+            field.set(field.getDeclaringClass(), objectMapper.readValue(value, field.getType()));
+        } catch (Exception e) {
+            log.error("field name={} type={} value={} 设置值异常", field.getName(), field.getType(), value, e);
         }
     }
 

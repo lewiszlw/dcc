@@ -3,6 +3,9 @@ package lewiszlw.dcc.demo.controller;
 import lewiszlw.dcc.client.DccClient;
 import lewiszlw.dcc.client.annotation.DccConfig;
 import lewiszlw.dcc.iface.response.ConfigDTO;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -29,6 +32,36 @@ public class HelloController {
     @DccConfig(key = "configKey1")
     private static String configWithSpecificKey;
 
+    @DccConfig
+    private static int configIntKey;
+
+    @DccConfig(key = "configLongKey")
+    private static Long configLongKey;
+
+    @DccConfig
+    private static float configFloatKey;
+
+    @DccConfig
+    private static Double configDoubleKey;
+
+    @DccConfig
+    private static Student configObjKey;
+
+    @DccConfig
+    private static Map<String, Student> configMapKey;
+
+    @DccConfig
+    private static List<Student> configListKey;
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    static class Student {
+        private String name;
+        private Integer age;
+        private Boolean isMale;
+    }
+
     @RequestMapping("/hello")
     public String hello() {
         return "hello";
@@ -46,7 +79,8 @@ public class HelloController {
 
     @RequestMapping("dcc/configAnnotation")
     public String configAnnotation() {
-        return String.format("configKey1: %s, configWithSpecificKey: %s", configKey1, configWithSpecificKey);
+        return String.format("configKey1: %s, configWithSpecificKey: %s, configIntKey: %d, configLongKey: %s, configFloatKey: %f, configDoubleKey: %f, configObjKey: %s, configMapKey: %s, configListKey: %s",
+                configKey1, configWithSpecificKey, configIntKey, configLongKey, configFloatKey, configDoubleKey, configObjKey, configMapKey, configListKey);
     }
 
 }
