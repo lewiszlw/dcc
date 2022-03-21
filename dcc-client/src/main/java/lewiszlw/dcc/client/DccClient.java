@@ -2,10 +2,13 @@ package lewiszlw.dcc.client;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.Maps;
 import com.google.common.io.Files;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import lewiszlw.dcc.client.annotation.DccConfig;
+import lewiszlw.dcc.client.listener.ConfigItemChangeListener;
+import lewiszlw.dcc.client.listener.ConfigSpaceChangeListener;
+import lewiszlw.dcc.client.listener.ItemChangeContext;
+import lewiszlw.dcc.client.listener.SpaceChangeContext;
 import lewiszlw.dcc.client.util.FileUtil;
 import lewiszlw.dcc.iface.ConfigDubboService;
 import lewiszlw.dcc.iface.constant.Env;
@@ -70,6 +73,8 @@ public class DccClient {
     private ScheduledExecutorService scheduledExecutorService;
     private volatile Map<String, String> configCache;
     private Map<String, Set<Field>> keyToFieldsMap;
+    private List<ConfigSpaceChangeListener> configSpaceChangeListeners;
+    private Map<String, List<ConfigItemChangeListener>> keyToConfigItemChangeListenersMap;
     private CuratorFramework zkClient;
 
     @Reference(version = "1.0.0", check = false)
@@ -122,6 +127,8 @@ public class DccClient {
                 new ThreadFactoryBuilder().setNameFormat("dcc-schedule-pool-%d").setDaemon(true).build());
         configCache = new ConcurrentHashMap<>(100);
         keyToFieldsMap = new HashMap<>();
+        configSpaceChangeListeners = new ArrayList<>();
+        keyToConfigItemChangeListenersMap = new HashMap<>();
     }
 
     /**
@@ -168,12 +175,14 @@ public class DccClient {
         for (Field field : fields) {
             DccConfig dccConfig = field.getAnnotation(DccConfig.class);
             String key = StringUtils.isEmpty(dccConfig.key()) ? field.getName(): dccConfig.key();
+
+            // 保存 key与fields 映射关系
+            Set<Field> fieldsUsingSameKey = keyToFieldsMap.getOrDefault(key, new HashSet<>());
+            fieldsUsingSameKey.add(field);
+            keyToFieldsMap.put(key, fieldsUsingSameKey);
+
+            // 设置field值
             if (configCache.containsKey(key)) {
-                // 保存 key与fields 映射关系
-                Set<Field> fieldsUsingSameKey = keyToFieldsMap.getOrDefault(key, new HashSet<>());
-                fieldsUsingSameKey.add(field);
-                keyToFieldsMap.put(key, fieldsUsingSameKey);
-                // 设置field值
                 setFieldValue(field, configCache.get(key));
             } else {
                 log.error("key={} 未进行配置或未生效，请检查", key);
@@ -189,18 +198,23 @@ public class DccClient {
             field.setAccessible(true);
             if (String.class.equals(field.getType())) {
                 field.set(field.getDeclaringClass(), value);
+                return;
             }
             if (Integer.class.equals(field.getType())) {
                 field.set(field.getDeclaringClass(), Integer.parseInt(value));
+                return;
             }
             if (Long.class.equals(field.getType())) {
                 field.set(field.getDeclaringClass(), Long.parseLong(value));
+                return;
             }
             if (Float.class.equals(field.getType())) {
                 field.set(field.getDeclaringClass(), Float.parseFloat(value));
+                return;
             }
             if (Double.class.equals(field.getType())) {
                 field.set(field.getDeclaringClass(), Double.parseDouble(value));
+                return;
             }
             field.set(field.getDeclaringClass(), objectMapper.readValue(value, field.getType()));
         } catch (Exception e) {
@@ -233,38 +247,62 @@ public class DccClient {
         if (configs == null || configs.size() == 0) {
             return;
         }
-        if (fullyUpdate) {
-            // 全量更新
-            for (Map.Entry<String, String> entry : configs.entrySet()) {
-                // TODO 如果字段发生改变，通知listener
-                if (!Objects.equals(entry.getValue(), configCache.get(entry.getKey()))) {
-                    Set<Field> fields = keyToFieldsMap.get(entry.getKey());
-                    if (CollectionUtils.isEmpty(fields)) {
-                        continue;
-                    }
-                    // 更新注解字段
-                    fields.forEach(field -> setFieldValue(field, entry.getValue()));
+
+        boolean isSpaceChanged = false;
+        List<String> changedKeys = new ArrayList<>();
+
+        for (Map.Entry<String, String> entry : configs.entrySet()) {
+            if (!Objects.equals(entry.getValue(), configCache.get(entry.getKey()))) {
+                Set<Field> fields = keyToFieldsMap.get(entry.getKey());
+                if (CollectionUtils.isEmpty(fields)) {
+                    continue;
                 }
-            }
-            // 全量更新cache
-            configCache = configs;
-        } else {
-            // 增量更新
-            for (Map.Entry<String, String> entry : configs.entrySet()) {
-                // TODO 如果字段发生改变，通知listener
-                if (!Objects.equals(entry.getValue(), configCache.get(entry.getKey()))) {
-                    Set<Field> fields = keyToFieldsMap.get(entry.getKey());
-                    if (CollectionUtils.isEmpty(fields)) {
-                        continue;
-                    }
-                    // 更新注解字段
-                    fields.forEach(field -> setFieldValue(field, entry.getValue()));
-                    // 更新cache
+
+                // 更新注解字段
+                fields.forEach(field -> setFieldValue(field, entry.getValue()));
+
+                // 通知 item listener
+                if (keyToConfigItemChangeListenersMap.containsKey(entry.getKey())) {
+                    ItemChangeContext context = ItemChangeContext.builder()
+                            .application(application)
+                            .env(env)
+                            .key(entry.getKey())
+                            .oldValue(configCache.get(entry.getKey()))
+                            .newValue(entry.getValue()).build();
+                    List<ConfigItemChangeListener> listeners = keyToConfigItemChangeListenersMap.get(entry.getKey());
+                    listeners.forEach(listener -> {
+                        listener.process(context);
+                    });
+                }
+
+                // 部分更新cache
+                if (!fullyUpdate) {
                     configCache.put(entry.getKey(), entry.getValue());
                 }
 
+
+                changedKeys.add(entry.getKey());
+                isSpaceChanged = true;
             }
         }
+
+        // 全量更新cache
+        if (fullyUpdate) {
+            configCache = configs;
+        }
+
+        // 通知 space listener
+        if (isSpaceChanged) {
+            configSpaceChangeListeners.forEach(listener -> {
+                SpaceChangeContext context = SpaceChangeContext.builder()
+                        .application(application)
+                        .env(env)
+                        .changedKeys(changedKeys)
+                        .build();
+                listener.process(context);
+            });
+        }
+
         try {
             // 缓存持久化
             Files.write(objectMapper.writeValueAsBytes(configCache), cacheFile);
@@ -324,10 +362,30 @@ public class DccClient {
     }
 
     /**
+     * 客户端注册监听器
+     */
+    public void registerListener(String key, ConfigItemChangeListener listener) {
+        if (StringUtils.isEmpty(key)) {
+            throw new IllegalArgumentException("key is empty");
+        }
+        List<ConfigItemChangeListener> listeners = keyToConfigItemChangeListenersMap.getOrDefault(key, new ArrayList<>());
+        listeners.add(listener);
+        keyToConfigItemChangeListenersMap.put(key, listeners);
+    }
+    public void registerListener(ConfigSpaceChangeListener listener) {
+        configSpaceChangeListeners.add(listener);
+    }
+
+    /**
      * spring bean destroy
      */
     public void destroy() {
-        // TODO
+        this.zkClient.close();
+        this.scheduledExecutorService.shutdownNow();
+        this.configCache.clear();
+        this.keyToFieldsMap.clear();
+        this.configSpaceChangeListeners.clear();
+        this.keyToConfigItemChangeListenersMap.clear();
     }
 
 }

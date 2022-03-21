@@ -2,15 +2,16 @@ package lewiszlw.dcc.demo.controller;
 
 import lewiszlw.dcc.client.DccClient;
 import lewiszlw.dcc.client.annotation.DccConfig;
-import lewiszlw.dcc.iface.response.ConfigDTO;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.annotation.PostConstruct;
 import java.util.List;
 import java.util.Map;
 
@@ -21,6 +22,7 @@ import java.util.Map;
  * @date 2019-04-26
  */
 @RestController
+@Slf4j
 public class HelloController {
 
     @Autowired
@@ -60,6 +62,12 @@ public class HelloController {
         private String name;
         private Integer age;
         private Boolean isMale;
+    }
+
+    @PostConstruct
+    private void init() {
+        dccClient.registerListener(context -> log.info("ConfigSpaceChangeListener received event, context: {}", context));
+        dccClient.registerListener("configKey1", context -> log.info("ConfigItemChangeListener received event, context: {}", context));
     }
 
     @RequestMapping("/hello")

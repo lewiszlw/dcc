@@ -96,17 +96,26 @@ public class ConfigServiceImpl implements ConfigService {
                 .collect(Collectors.toList());
 
         // 落库
-        // 版本号+1
+        List<ConfigEntity> configEntitiesToBeInserted = new ArrayList<>();
         configEntities.forEach(configEntity -> {
             ConfigEntity oldConfigEntity = queryLatestConfig(configEntity.getApplication(),
                     configEntity.getEnv(),
                     configEntity.getKey());
-            configEntity.setVersion(oldConfigEntity == null ? Constants.INIT_VERSION : oldConfigEntity.getVersion() + 1);
+            if (oldConfigEntity == null) {
+                configEntity.setVersion(Constants.INIT_VERSION);
+                configEntitiesToBeInserted.add(configEntity);
+                return;
+            }
+            // 版本号+1
+            if (!Objects.equals(configEntity.getValue(), oldConfigEntity.getValue())) {
+                configEntity.setVersion(oldConfigEntity.getVersion() + 1);
+                configEntitiesToBeInserted.add(configEntity);
+                return;
+            }
         });
-        int result = configMapper.batchInsert(configEntities);
+        int result = configMapper.batchInsert(configEntitiesToBeInserted);
 
         // zk增加或更新节点
-        // TODO 比较value是否修改
         configEntities.forEach(configEntity -> {
             zooKeeperService.createOrUpdate(
                     ZkUtil.configPath(configEntity.getApplication(), configEntity.getEnv(), configEntity.getKey()),

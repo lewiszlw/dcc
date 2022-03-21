@@ -10,7 +10,7 @@ TODO
 - [x] Client端定时拉取所有最新配置
 - [x] 支持回滚配置
 - [x] 支持多种数据类型配置
-- [ ] 支持监听配置修改事件
+- [x] 支持监听配置修改事件
 - [ ] 配置灰度发布
 - [ ] 配置修改权限控制
 
@@ -50,6 +50,26 @@ private static String configKey1; // key为变量名
 
 @DccConfig(key = "configKey2")
 private static String config;
+
+// 3.支持多种数据结构
+@DccConfig
+private static int configIntKey;
+@DccConfig
+private static Long configLongKey;
+@DccConfig
+private static float configFloatKey;
+@DccConfig
+private static Double configDoubleKey;
+@DccConfig
+private static Student configObjKey;
+@DccConfig
+private static Map<String, Student> configMapKey;
+@DccConfig
+private static List<Student> configListKey;
+
+// 4.注册监听器
+dccClient.registerListener(context -> log.info("ConfigSpaceChangeListener received event, context: {}", context));
+dccClient.registerListener("configKey1", context -> log.info("ConfigItemChangeListener received event, context: {}", context));
 ```
 
 # FAQ
